@@ -23,14 +23,18 @@ public class AdmissionService {
     }
 
     public AdmissionState admitPatient(AdmissionDTO admissionDTO) {
+        System.out.println("Looking for patient with ID: " + admissionDTO.getPatientId());
+
         Patient patient = patientRepository.findById(admissionDTO.getPatientId())
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
+                .orElseThrow(() -> {
+                    System.out.println("Patient not found! ID: " + admissionDTO.getPatientId());
+                    return new RuntimeException("Patient not found");
+                });
 
-        // ✅ Ensuring correct constructor usage
         AdmissionState admission = new AdmissionState(patient, admissionDTO.getCause(), LocalDateTime.now());
-
         return admissionRepository.save(admission);
     }
+
 
     public List<AdmissionDTO> getAdmissionsByPatient(Long patientId) {
         List<AdmissionState> admissions = admissionRepository.findByPatientId(patientId);

@@ -1,4 +1,4 @@
-package java.com.example.hospitalmanagement;
+package com.example.hospitalmanagement;
 
 import com.example.hospitalmanagement.dto.DepartmentDTO;
 import com.example.hospitalmanagement.entity.Department;
