@@ -26,7 +26,7 @@ class AdmissionServiceTest {
     @Mock
     private AdmissionRepository admissionRepository;
 
-     @Mock
+    @Mock
     private PatientRepository patientRepository;
 
     @InjectMocks

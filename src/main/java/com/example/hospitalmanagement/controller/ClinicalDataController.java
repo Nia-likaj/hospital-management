@@ -27,4 +27,9 @@ public class ClinicalDataController {
     public ResponseEntity<List<ClinicalDataDTO>> getClinicalRecordsByPatient(@PathVariable Long patientId) {
         return ResponseEntity.ok(clinicalDataService.getClinicalRecordsByPatient(patientId));
     }
+
+    @GetMapping
+    public ResponseEntity<String> getAllClinicalData() {
+        return ResponseEntity.ok("Welcome to Clinical Data");
+    }
 }
