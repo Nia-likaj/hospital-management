@@ -17,17 +17,18 @@ public class AdmissionState {
 
     private LocalDateTime enteringDate = LocalDateTime.now();
     private LocalDateTime exitingDate;
-    private String cause = "";
-    private String reason = "";
+    private String cause;
+    private String reason;
     private boolean discharge = false;
 
     @ManyToOne
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 
+    // Default Constructor
     public AdmissionState() {}
 
-    // ✅ Correct Constructor
+    // Constructor with Required Fields
     public AdmissionState(Patient patient, String cause, LocalDateTime enteringDate) {
         this.patient = patient;
         this.cause = cause;

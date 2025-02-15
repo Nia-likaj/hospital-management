@@ -26,7 +26,7 @@ class AdmissionServiceTest {
     @Mock
     private AdmissionRepository admissionRepository;
 
-    @Mock
+     @Mock
     private PatientRepository patientRepository;
 
     @InjectMocks
@@ -36,91 +36,102 @@ class AdmissionServiceTest {
 
     @BeforeEach
     void setUp() {
-        closeable = MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);  // Initialize mocks
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        closeable.close(); // Ensures resources are closed after each test
+        closeable.close();  // Release resources
     }
 
     @Test
     void testAdmitPatient_Success() {
         // Arrange
-        AdmissionDTO admissionDTO = new AdmissionDTO(1L, "Heart Surgery");
+        Long patientId = 7L;  // Use a valid patient ID from your database
+        AdmissionDTO admissionDTO = new AdmissionDTO(patientId, "Heart Surgery");
+
         Patient patient = new Patient();
-        patient.setId(1L);
+        patient.setId(patientId);  // Ensure the patient ID matches the one in the DTO
 
         AdmissionState admission = new AdmissionState(patient, "Heart Surgery", LocalDateTime.now());
 
-        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
+        // Mock the repository to return the patient
+        when(patientRepository.findById(patientId)).thenReturn(Optional.of(patient));
         when(admissionRepository.save(any(AdmissionState.class))).thenReturn(admission);
 
         // Act
         AdmissionState result = admissionService.admitPatient(admissionDTO);
 
         // Assert
-        assertNotNull(result);
-        assertEquals("Heart Surgery", result.getCause());
-        assertEquals(patient, result.getPatient());
+        assertNotNull(result, "Admission should not be null");
+        assertEquals("Heart Surgery", result.getCause(), "Cause should match");
+        assertEquals(patient, result.getPatient(), "Patient should match");
 
-        verify(patientRepository, times(1)).findById(1L);
+        // Verify interactions
+        verify(patientRepository, times(1)).findById(patientId);
         verify(admissionRepository, times(1)).save(any(AdmissionState.class));
     }
 
     @Test
     void testAdmitPatient_PatientNotFound() {
         // Arrange
-        AdmissionDTO admissionDTO = new AdmissionDTO(2L, "General Checkup");
+        Long patientId = 8L;  // Use a valid patient ID that does not exist
+        AdmissionDTO admissionDTO = new AdmissionDTO(patientId, "General Checkup");
 
-        when(patientRepository.findById(2L)).thenReturn(Optional.empty());
+        // Mock the repository to return an empty Optional (patient not found)
+        when(patientRepository.findById(patientId)).thenReturn(Optional.empty());
 
         // Act & Assert
         Exception exception = assertThrows(RuntimeException.class, () -> admissionService.admitPatient(admissionDTO));
-        assertEquals("Patient not found", exception.getMessage());
+        assertEquals("Patient not found", exception.getMessage(), "Exception message should match");
 
-        verify(patientRepository, times(1)).findById(2L);
+        // Verify interactions
+        verify(patientRepository, times(1)).findById(patientId);
         verify(admissionRepository, never()).save(any(AdmissionState.class));
     }
 
     @Test
     void testGetAdmissionsByPatient_Success() {
         // Arrange
-        Long patientId = 1L;
+        Long patientId = 7L;  // Use a valid patient ID
         Patient patient = new Patient();
         patient.setId(patientId);
 
         AdmissionState admission = new AdmissionState(patient, "Heart Surgery", LocalDateTime.now());
         List<AdmissionState> admissions = Collections.singletonList(admission);
 
+        // Mock the repository to return admissions for the patient
         when(admissionRepository.findByPatientId(patientId)).thenReturn(admissions);
 
         // Act
         List<AdmissionDTO> result = admissionService.getAdmissionsByPatient(patientId);
 
         // Assert
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals("Heart Surgery", result.get(0).getCause());
-        assertEquals(patientId, result.get(0).getPatientId());
+        assertNotNull(result, "Result should not be null");
+        assertEquals(1, result.size(), "There should be one admission");
+        assertEquals("Heart Surgery", result.get(0).getCause(), "Cause should match");
+        assertEquals(patientId, result.get(0).getPatientId(), "Patient ID should match");
 
+        // Verify interactions
         verify(admissionRepository, times(1)).findByPatientId(patientId);
     }
 
     @Test
     void testGetAdmissionsByPatient_NoAdmissionsFound() {
         // Arrange
-        Long patientId = 2L;
+        Long patientId = 9L;  // Use a valid patient ID with no admissions
 
+        // Mock the repository to return an empty list (no admissions found)
         when(admissionRepository.findByPatientId(patientId)).thenReturn(Collections.emptyList());
 
         // Act
         List<AdmissionDTO> result = admissionService.getAdmissionsByPatient(patientId);
 
         // Assert
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        assertNotNull(result, "Result should not be null");
+        assertTrue(result.isEmpty(), "Result should be empty");
 
+        // Verify interactions
         verify(admissionRepository, times(1)).findByPatientId(patientId);
     }
 }

@@ -23,23 +23,22 @@ public class AdmissionService {
     }
 
     public AdmissionState admitPatient(AdmissionDTO admissionDTO) {
-        System.out.println("Looking for patient with ID: " + admissionDTO.getPatientId());
+        Long patientId = admissionDTO.getPatientId();
+        if (patientId == null) {
+            throw new RuntimeException("Patient ID cannot be null");
+        }
 
-        Patient patient = patientRepository.findById(admissionDTO.getPatientId())
-                .orElseThrow(() -> {
-                    System.out.println("Patient not found! ID: " + admissionDTO.getPatientId());
-                    return new RuntimeException("Patient not found");
-                });
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new RuntimeException("Patient not found"));
 
         AdmissionState admission = new AdmissionState(patient, admissionDTO.getCause(), LocalDateTime.now());
         return admissionRepository.save(admission);
     }
 
-
     public List<AdmissionDTO> getAdmissionsByPatient(Long patientId) {
         List<AdmissionState> admissions = admissionRepository.findByPatientId(patientId);
-        return admissions.stream().map(admission ->
-                        new AdmissionDTO(admission.getPatient().getId(), admission.getCause()))
+        return admissions.stream()
+                .map(admission -> new AdmissionDTO(admission.getPatient().getId(), admission.getCause()))
                 .collect(Collectors.toList());
     }
 }
