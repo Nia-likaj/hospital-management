@@ -23,115 +23,125 @@ import static org.mockito.Mockito.*;
 
 class AdmissionServiceTest {
 
+    // Mock the AdmissionRepository to simulate database operations
     @Mock
     private AdmissionRepository admissionRepository;
 
+    // Mock the PatientRepository to simulate database operations
     @Mock
     private PatientRepository patientRepository;
 
+    // Inject the mocks into the AdmissionService instance being tested
     @InjectMocks
     private AdmissionService admissionService;
 
+    // Used to release resources after tests
     private AutoCloseable closeable;
 
+    // This method runs before each test to initialize mocks
     @BeforeEach
     void setUp() {
-        closeable = MockitoAnnotations.openMocks(this);  // Initialize mocks
+        closeable = MockitoAnnotations.openMocks(this); // Initialize mocks
     }
 
+    // This method runs after each test to release resources
     @AfterEach
     void tearDown() throws Exception {
-        closeable.close();  // Release resources
+        closeable.close(); // Release resources
     }
 
+    // Test case: Successfully admit a patient
     @Test
     void testAdmitPatient_Success() {
-        // Arrange
-        Long patientId = 7L;  // Use a valid patient ID from your database
-        AdmissionDTO admissionDTO = new AdmissionDTO(patientId, "Heart Surgery");
+        // Arrange: Set up test data and mock behavior
+        Long patientId = 7L; // Valid patient ID
+        AdmissionDTO admissionDTO = new AdmissionDTO(patientId, "Heart Surgery"); // Admission DTO
 
         Patient patient = new Patient();
-        patient.setId(patientId);  // Ensure the patient ID matches the one in the DTO
+        patient.setId(patientId); // Set patient ID
 
-        AdmissionState admission = new AdmissionState(patient, "Heart Surgery", LocalDateTime.now());
+        AdmissionState admission = new AdmissionState(patient, "Heart Surgery", LocalDateTime.now()); // Expected admission
 
-        // Mock the repository to return the patient
-        when(patientRepository.findById(patientId)).thenReturn(Optional.of(patient));
-        when(admissionRepository.save(any(AdmissionState.class))).thenReturn(admission);
+        // Mock repository behavior
+        when(patientRepository.findById(patientId)).thenReturn(Optional.of(patient)); // Return patient when searched
+        when(admissionRepository.save(any(AdmissionState.class))).thenReturn(admission); // Return admission when saved
 
-        // Act
+        // Act: Call the service method
         AdmissionState result = admissionService.admitPatient(admissionDTO);
 
-        // Assert
-        assertNotNull(result, "Admission should not be null");
-        assertEquals("Heart Surgery", result.getCause(), "Cause should match");
-        assertEquals(patient, result.getPatient(), "Patient should match");
+        // Assert: Verify the result
+        assertNotNull(result, "Admission should not be null"); // Verify result is not null
+        assertEquals("Heart Surgery", result.getCause(), "Cause should match"); // Verify cause
+        assertEquals(patient, result.getPatient(), "Patient should match"); // Verify patient
 
-        // Verify interactions
-        verify(patientRepository, times(1)).findById(patientId);
-        verify(admissionRepository, times(1)).save(any(AdmissionState.class));
+        // Verify interactions: Ensure repositories were called as expected
+        verify(patientRepository, times(1)).findById(patientId); // Verify patient was searched
+        verify(admissionRepository, times(1)).save(any(AdmissionState.class)); // Verify admission was saved
     }
 
+    // Test case: Fail to admit a patient because the patient is not found
     @Test
     void testAdmitPatient_PatientNotFound() {
-        // Arrange
-        Long patientId = 8L;  // Use a valid patient ID that does not exist
-        AdmissionDTO admissionDTO = new AdmissionDTO(patientId, "General Checkup");
+        // Arrange: Set up test data and mock behavior
+        Long patientId = 8L; // Non-existent patient ID
+        AdmissionDTO admissionDTO = new AdmissionDTO(patientId, "General Checkup"); // Admission DTO
 
-        // Mock the repository to return an empty Optional (patient not found)
+        // Mock repository behavior (patient not found)
         when(patientRepository.findById(patientId)).thenReturn(Optional.empty());
 
-        // Act & Assert
+        // Act & Assert: Call the service method and expect an exception
         Exception exception = assertThrows(RuntimeException.class, () -> admissionService.admitPatient(admissionDTO));
-        assertEquals("Patient not found", exception.getMessage(), "Exception message should match");
+        assertEquals("Patient not found", exception.getMessage(), "Exception message should match"); // Verify exception message
 
-        // Verify interactions
-        verify(patientRepository, times(1)).findById(patientId);
-        verify(admissionRepository, never()).save(any(AdmissionState.class));
+        // Verify interactions: Ensure repositories were called as expected
+        verify(patientRepository, times(1)).findById(patientId); // Verify patient was searched
+        verify(admissionRepository, never()).save(any(AdmissionState.class)); // Verify admission was not saved
     }
 
+    // Test case: Successfully retrieve admissions for a patient
     @Test
     void testGetAdmissionsByPatient_Success() {
-        // Arrange
-        Long patientId = 7L;  // Use a valid patient ID
+        // Arrange: Set up test data and mock behavior
+        Long patientId = 7L; // Valid patient ID
         Patient patient = new Patient();
-        patient.setId(patientId);
+        patient.setId(patientId); // Set patient ID
 
-        AdmissionState admission = new AdmissionState(patient, "Heart Surgery", LocalDateTime.now());
-        List<AdmissionState> admissions = Collections.singletonList(admission);
+        AdmissionState admission = new AdmissionState(patient, "Heart Surgery", LocalDateTime.now()); // Admission record
+        List<AdmissionState> admissions = Collections.singletonList(admission); // List of admissions
 
-        // Mock the repository to return admissions for the patient
-        when(admissionRepository.findByPatientId(patientId)).thenReturn(admissions);
+        // Mock repository behavior
+        when(admissionRepository.findByPatientId(patientId)).thenReturn(admissions); // Return admissions for patient
 
-        // Act
+        // Act: Call the service method
         List<AdmissionDTO> result = admissionService.getAdmissionsByPatient(patientId);
 
-        // Assert
-        assertNotNull(result, "Result should not be null");
-        assertEquals(1, result.size(), "There should be one admission");
-        assertEquals("Heart Surgery", result.get(0).getCause(), "Cause should match");
-        assertEquals(patientId, result.get(0).getPatientId(), "Patient ID should match");
+        // Assert: Verify the result
+        assertNotNull(result, "Result should not be null"); // Verify result is not null
+        assertEquals(1, result.size(), "There should be one admission"); // Verify number of admissions
+        assertEquals("Heart Surgery", result.get(0).getCause(), "Cause should match"); // Verify cause
+        assertEquals(patientId, result.get(0).getPatientId(), "Patient ID should match"); // Verify patient ID
 
-        // Verify interactions
-        verify(admissionRepository, times(1)).findByPatientId(patientId);
+        // Verify interactions: Ensure repository was called as expected
+        verify(admissionRepository, times(1)).findByPatientId(patientId); // Verify admissions were searched
     }
 
+    // Test case: No admissions found for a patient
     @Test
     void testGetAdmissionsByPatient_NoAdmissionsFound() {
-        // Arrange
-        Long patientId = 9L;  // Use a valid patient ID with no admissions
+        // Arrange: Set up test data and mock behavior
+        Long patientId = 9L; // Valid patient ID with no admissions
 
-        // Mock the repository to return an empty list (no admissions found)
+        // Mock repository behavior (no admissions found)
         when(admissionRepository.findByPatientId(patientId)).thenReturn(Collections.emptyList());
 
-        // Act
+        // Act: Call the service method
         List<AdmissionDTO> result = admissionService.getAdmissionsByPatient(patientId);
 
-        // Assert
-        assertNotNull(result, "Result should not be null");
-        assertTrue(result.isEmpty(), "Result should be empty");
+        // Assert: Verify the result
+        assertNotNull(result, "Result should not be null"); // Verify result is not null
+        assertTrue(result.isEmpty(), "Result should be empty"); // Verify result is empty
 
-        // Verify interactions
-        verify(admissionRepository, times(1)).findByPatientId(patientId);
+        // Verify interactions: Ensure repository was called as expected
+        verify(admissionRepository, times(1)).findByPatientId(patientId); // Verify admissions were searched
     }
 }
