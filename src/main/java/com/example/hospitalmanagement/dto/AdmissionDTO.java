@@ -3,6 +3,9 @@ package com.example.hospitalmanagement.dto;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import com.example.hospitalmanagement.dto.AdmissionDTO;
+import com.example.hospitalmanagement.entity.AdmissionState;
+import java.util.stream.Collectors;
 
 @Setter
 @Getter

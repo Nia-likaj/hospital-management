@@ -23,8 +23,8 @@ public class AdmissionController {
         return ResponseEntity.ok(admissionService.admitPatient(admissionDTO));
     }
 
-    @GetMapping("/{patientId}")
-    public ResponseEntity<List<AdmissionDTO>> getAdmissionsByPatient(@PathVariable Long patientId) {
-        return ResponseEntity.ok(admissionService.getAdmissionsByPatient(patientId));
+    @GetMapping
+    public ResponseEntity<List<AdmissionDTO>> getAllAdmissions() {
+        return ResponseEntity.ok(admissionService.getAllAdmissions());
     }
 }

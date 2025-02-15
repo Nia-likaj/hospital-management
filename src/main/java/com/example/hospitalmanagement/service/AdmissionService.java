@@ -41,4 +41,11 @@ public class AdmissionService {
                 .map(admission -> new AdmissionDTO(admission.getPatient().getId(), admission.getCause()))
                 .collect(Collectors.toList());
     }
+
+    public List<AdmissionDTO> getAllAdmissions() {
+        List<AdmissionState> admissions = admissionRepository.findAll();
+        return admissions.stream()
+                .map(admission -> new AdmissionDTO(admission.getPatient().getId(), admission.getCause()))
+                .collect(Collectors.toList());
+    }
 }
