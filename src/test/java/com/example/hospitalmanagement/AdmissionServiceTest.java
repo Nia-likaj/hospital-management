@@ -23,104 +23,125 @@ import static org.mockito.Mockito.*;
 
 class AdmissionServiceTest {
 
+    // Mock the AdmissionRepository to simulate database operations
     @Mock
     private AdmissionRepository admissionRepository;
 
+    // Mock the PatientRepository to simulate database operations
     @Mock
     private PatientRepository patientRepository;
 
+    // Inject the mocks into the AdmissionService instance being tested
     @InjectMocks
     private AdmissionService admissionService;
 
+    // Used to release resources after tests
     private AutoCloseable closeable;
 
+    // This method runs before each test to initialize mocks
     @BeforeEach
     void setUp() {
-        closeable = MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this); // Initialize mocks
     }
 
+    // This method runs after each test to release resources
     @AfterEach
     void tearDown() throws Exception {
-        closeable.close(); // Ensures resources are closed after each test
+        closeable.close(); // Release resources
     }
 
+    // Test case: Successfully admit a patient
     @Test
     void testAdmitPatient_Success() {
-        // Arrange
-        AdmissionDTO admissionDTO = new AdmissionDTO(1L, "Heart Surgery");
+        // Arrange: Set up test data and mock behavior
+        Long patientId = 7L; // Valid patient ID
+        AdmissionDTO admissionDTO = new AdmissionDTO(patientId, "Heart Surgery"); // Admission DTO
+
         Patient patient = new Patient();
-        patient.setId(1L);
+        patient.setId(patientId); // Set patient ID
 
-        AdmissionState admission = new AdmissionState(patient, "Heart Surgery", LocalDateTime.now());
+        AdmissionState admission = new AdmissionState(patient, "Heart Surgery", LocalDateTime.now()); // Expected admission
 
-        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
-        when(admissionRepository.save(any(AdmissionState.class))).thenReturn(admission);
+        // Mock repository behavior
+        when(patientRepository.findById(patientId)).thenReturn(Optional.of(patient)); // Return patient when searched
+        when(admissionRepository.save(any(AdmissionState.class))).thenReturn(admission); // Return admission when saved
 
-        // Act
+        // Act: Call the service method
         AdmissionState result = admissionService.admitPatient(admissionDTO);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals("Heart Surgery", result.getCause());
-        assertEquals(patient, result.getPatient());
+        // Assert: Verify the result
+        assertNotNull(result, "Admission should not be null"); // Verify result is not null
+        assertEquals("Heart Surgery", result.getCause(), "Cause should match"); // Verify cause
+        assertEquals(patient, result.getPatient(), "Patient should match"); // Verify patient
 
-        verify(patientRepository, times(1)).findById(1L);
-        verify(admissionRepository, times(1)).save(any(AdmissionState.class));
+        // Verify interactions: Ensure repositories were called as expected
+        verify(patientRepository, times(1)).findById(patientId); // Verify patient was searched
+        verify(admissionRepository, times(1)).save(any(AdmissionState.class)); // Verify admission was saved
     }
 
+    // Test case: Fail to admit a patient because the patient is not found
     @Test
     void testAdmitPatient_PatientNotFound() {
-        // Arrange
-        AdmissionDTO admissionDTO = new AdmissionDTO(2L, "General Checkup");
+        // Arrange: Set up test data and mock behavior
+        Long patientId = 8L; // Non-existent patient ID
+        AdmissionDTO admissionDTO = new AdmissionDTO(patientId, "General Checkup"); // Admission DTO
 
-        when(patientRepository.findById(2L)).thenReturn(Optional.empty());
+        // Mock repository behavior (patient not found)
+        when(patientRepository.findById(patientId)).thenReturn(Optional.empty());
 
-        // Act & Assert
+        // Act & Assert: Call the service method and expect an exception
         Exception exception = assertThrows(RuntimeException.class, () -> admissionService.admitPatient(admissionDTO));
-        assertEquals("Patient not found", exception.getMessage());
+        assertEquals("Patient not found", exception.getMessage(), "Exception message should match"); // Verify exception message
 
-        verify(patientRepository, times(1)).findById(2L);
-        verify(admissionRepository, never()).save(any(AdmissionState.class));
+        // Verify interactions: Ensure repositories were called as expected
+        verify(patientRepository, times(1)).findById(patientId); // Verify patient was searched
+        verify(admissionRepository, never()).save(any(AdmissionState.class)); // Verify admission was not saved
     }
 
+    // Test case: Successfully retrieve admissions for a patient
     @Test
     void testGetAdmissionsByPatient_Success() {
-        // Arrange
-        Long patientId = 1L;
+        // Arrange: Set up test data and mock behavior
+        Long patientId = 7L; // Valid patient ID
         Patient patient = new Patient();
-        patient.setId(patientId);
+        patient.setId(patientId); // Set patient ID
 
-        AdmissionState admission = new AdmissionState(patient, "Heart Surgery", LocalDateTime.now());
-        List<AdmissionState> admissions = Collections.singletonList(admission);
+        AdmissionState admission = new AdmissionState(patient, "Heart Surgery", LocalDateTime.now()); // Admission record
+        List<AdmissionState> admissions = Collections.singletonList(admission); // List of admissions
 
-        when(admissionRepository.findByPatientId(patientId)).thenReturn(admissions);
+        // Mock repository behavior
+        when(admissionRepository.findByPatientId(patientId)).thenReturn(admissions); // Return admissions for patient
 
-        // Act
+        // Act: Call the service method
         List<AdmissionDTO> result = admissionService.getAdmissionsByPatient(patientId);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals("Heart Surgery", result.get(0).getCause());
-        assertEquals(patientId, result.get(0).getPatientId());
+        // Assert: Verify the result
+        assertNotNull(result, "Result should not be null"); // Verify result is not null
+        assertEquals(1, result.size(), "There should be one admission"); // Verify number of admissions
+        assertEquals("Heart Surgery", result.get(0).getCause(), "Cause should match"); // Verify cause
+        assertEquals(patientId, result.get(0).getPatientId(), "Patient ID should match"); // Verify patient ID
 
-        verify(admissionRepository, times(1)).findByPatientId(patientId);
+        // Verify interactions: Ensure repository was called as expected
+        verify(admissionRepository, times(1)).findByPatientId(patientId); // Verify admissions were searched
     }
 
+    // Test case: No admissions found for a patient
     @Test
     void testGetAdmissionsByPatient_NoAdmissionsFound() {
-        // Arrange
-        Long patientId = 2L;
+        // Arrange: Set up test data and mock behavior
+        Long patientId = 9L; // Valid patient ID with no admissions
 
+        // Mock repository behavior (no admissions found)
         when(admissionRepository.findByPatientId(patientId)).thenReturn(Collections.emptyList());
 
-        // Act
+        // Act: Call the service method
         List<AdmissionDTO> result = admissionService.getAdmissionsByPatient(patientId);
 
-        // Assert
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        // Assert: Verify the result
+        assertNotNull(result, "Result should not be null"); // Verify result is not null
+        assertTrue(result.isEmpty(), "Result should be empty"); // Verify result is empty
 
-        verify(admissionRepository, times(1)).findByPatientId(patientId);
+        // Verify interactions: Ensure repository was called as expected
+        verify(admissionRepository, times(1)).findByPatientId(patientId); // Verify admissions were searched
     }
 }
