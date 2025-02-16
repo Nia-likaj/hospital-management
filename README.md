@@ -1,7 +1,3 @@
-Here is a basic structure for your README file:
-
----
-
 # Hospital Management System
 
 ## Overview
@@ -49,7 +45,7 @@ Refer to the database schema diagram for more details on the relationships betwe
 
 1. **Clone the repository**:
    ```bash
-   git clone <repository_url>
+   git clone https://github.com/ergishasani/hospital-management-V2.git
    ```
 
 2. **Backend Setup**:
